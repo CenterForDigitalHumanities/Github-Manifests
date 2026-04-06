@@ -1,5 +1,6 @@
 import fs from "node:fs/promises"
 import path from "node:path"
+import { execSync } from "node:child_process"
 import { fileURLToPath } from "node:url"
 import yaml from "js-yaml"
 
@@ -119,7 +120,31 @@ export async function writeText(filePath, text) {
 }
 
 export function getRepoSlugFromEnv() {
-  return process.env.GITHUB_REPOSITORY ?? ""
+  if (process.env.GITHUB_REPOSITORY) {
+    return process.env.GITHUB_REPOSITORY
+  }
+
+  try {
+    const remoteUrl = execSync("git config --get remote.origin.url", {
+      cwd: repoRoot,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"]
+    }).trim()
+
+    const httpsMatch = remoteUrl.match(/^https:\/\/github\.com\/([^/]+)\/([^/]+?)(?:\.git)?$/i)
+    if (httpsMatch) {
+      return `${httpsMatch[1]}/${httpsMatch[2]}`
+    }
+
+    const sshMatch = remoteUrl.match(/^git@github\.com:([^/]+)\/([^/]+?)(?:\.git)?$/i)
+    if (sshMatch) {
+      return `${sshMatch[1]}/${sshMatch[2]}`
+    }
+  } catch {
+    return ""
+  }
+
+  return ""
 }
 
 export function buildSiteBaseUrl() {
