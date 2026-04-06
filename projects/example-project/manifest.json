@@ -1,6 +1,6 @@
 {
   "@context": "http://iiif.io/api/presentation/3/context.json",
-  "id": "https://example.org/projects/example-project/manifest.json",
+  "id": "https://CenterForDigitalHumanities.github.io/Github-Manifests/projects/example-project/manifest.json",
   "type": "Manifest",
   "label": {
     "none": [
@@ -35,7 +35,7 @@
   ],
   "items": [
     {
-      "id": "https://example.org/projects/example-project/manifest.json/canvas/1",
+      "id": "https://CenterForDigitalHumanities.github.io/Github-Manifests/projects/example-project/manifest.json/canvas/1",
       "type": "Canvas",
       "label": {
         "en": [
@@ -44,11 +44,11 @@
       },
       "items": [
         {
-          "id": "https://example.org/projects/example-project/manifest.json/page/1/1",
+          "id": "https://CenterForDigitalHumanities.github.io/Github-Manifests/projects/example-project/manifest.json/page/1/1",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "https://example.org/projects/example-project/manifest.json/annotation/1/1",
+              "id": "https://CenterForDigitalHumanities.github.io/Github-Manifests/projects/example-project/manifest.json/annotation/1/1",
               "type": "Annotation",
               "motivation": "painting",
               "body": {
@@ -56,14 +56,14 @@
                 "type": "Image",
                 "format": "image/jpeg"
               },
-              "target": "https://example.org/projects/example-project/manifest.json/canvas/1"
+              "target": "https://CenterForDigitalHumanities.github.io/Github-Manifests/projects/example-project/manifest.json/canvas/1"
             }
           ]
         }
       ]
     },
     {
-      "id": "https://example.org/projects/example-project/manifest.json/canvas/2",
+      "id": "https://CenterForDigitalHumanities.github.io/Github-Manifests/projects/example-project/manifest.json/canvas/2",
       "type": "Canvas",
       "label": {
         "en": [
@@ -72,11 +72,11 @@
       },
       "items": [
         {
-          "id": "https://example.org/projects/example-project/manifest.json/page/2/1",
+          "id": "https://CenterForDigitalHumanities.github.io/Github-Manifests/projects/example-project/manifest.json/page/2/1",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "https://example.org/projects/example-project/manifest.json/annotation/2/1",
+              "id": "https://CenterForDigitalHumanities.github.io/Github-Manifests/projects/example-project/manifest.json/annotation/2/1",
               "type": "Annotation",
               "motivation": "painting",
               "body": {
@@ -84,7 +84,7 @@
                 "type": "Image",
                 "format": "image/jpeg"
               },
-              "target": "https://example.org/projects/example-project/manifest.json/canvas/2"
+              "target": "https://CenterForDigitalHumanities.github.io/Github-Manifests/projects/example-project/manifest.json/canvas/2"
             }
           ]
         }
