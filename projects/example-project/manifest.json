@@ -1,0 +1,119 @@
+{
+  "@context": "http://iiif.io/api/presentation/3/context.json",
+  "id": "https://example.org/projects/example-project/manifest.json",
+  "type": "Manifest",
+  "label": {
+    "none": [
+      "Example Project"
+    ]
+  },
+  "metadata": [
+    {
+      "label": {
+        "en": [
+          "Creator"
+        ]
+      },
+      "value": {
+        "en": [
+          "Example Archivist"
+        ]
+      }
+    },
+    {
+      "label": {
+        "en": [
+          "Date"
+        ]
+      },
+      "value": {
+        "none": [
+          "1901"
+        ]
+      }
+    }
+  ],
+  "items": [
+    {
+      "id": "https://example.org/projects/example-project/manifest.json/canvas/1",
+      "type": "Canvas",
+      "label": {
+        "en": [
+          "External Page 1 (from info.yml)"
+        ]
+      },
+      "items": [
+        {
+          "id": "https://example.org/projects/example-project/manifest.json/page/1/1",
+          "type": "AnnotationPage",
+          "items": [
+            {
+              "id": "https://example.org/projects/example-project/manifest.json/annotation/1/1",
+              "type": "Annotation",
+              "motivation": "painting",
+              "body": {
+                "id": "https://iiif.io/api/image/3.0/example/reference/15f769d62ca9a3a2deca390efed75d73-5_titlepage2/full/max/0/default.jpg",
+                "type": "Image",
+                "format": "image/jpeg"
+              },
+              "target": "https://example.org/projects/example-project/manifest.json/canvas/1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "https://example.org/projects/example-project/manifest.json/canvas/2",
+      "type": "Canvas",
+      "label": {
+        "en": [
+          "External Page 2 (via .lnk reference)"
+        ]
+      },
+      "items": [
+        {
+          "id": "https://example.org/projects/example-project/manifest.json/page/2/1",
+          "type": "AnnotationPage",
+          "items": [
+            {
+              "id": "https://example.org/projects/example-project/manifest.json/annotation/2/1",
+              "type": "Annotation",
+              "motivation": "painting",
+              "body": {
+                "id": "https://iiif.io/api/image/3.0/example/reference/15f769d62ca9a3a2deca390efed75d73-3_titlepage1/full/max/0/default.jpg",
+                "type": "Image",
+                "format": "image/jpeg"
+              },
+              "target": "https://example.org/projects/example-project/manifest.json/canvas/2"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "en": [
+      "Example generated manifest for TPEN3 and Mirador testing."
+    ]
+  },
+  "rights": "http://creativecommons.org/licenses/by/4.0/",
+  "requiredStatement": {
+    "label": {
+      "en": [
+        "Attribution"
+      ]
+    },
+    "value": {
+      "en": [
+        "Provided by Example Institution"
+      ]
+    }
+  },
+  "seeAlso": [
+    {
+      "id": "https://iiif.io/",
+      "type": "Dataset",
+      "format": "text/html"
+    }
+  ]
+}

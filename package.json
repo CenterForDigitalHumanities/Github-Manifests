@@ -1,0 +1,21 @@
+{
+  "name": "github-manifests",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Generate IIIF Presentation 3 manifests for TPEN3/Mirador projects",
+  "type": "module",
+  "scripts": {
+    "generate": "node scripts/generate.js",
+    "generate:all": "node scripts/generate.js --all",
+    "validate": "node scripts/validate.js",
+    "validate:all": "node scripts/validate.js --all"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "image-size": "^1.1.1",
+    "js-yaml": "^4.1.0",
+    "mime-types": "^2.1.35"
+  }
+}
