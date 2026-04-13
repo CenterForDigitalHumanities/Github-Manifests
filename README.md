@@ -29,6 +29,12 @@ This repository is designed for low-friction manifest creation:
 └── .github/workflows/generate-manifests.yml
 ```
 
+<!-- GENERATED_PROJECT_LINKS_START -->
+## Projects
+
+- [example-project](./projects/example-project/)
+<!-- GENERATED_PROJECT_LINKS_END -->
+
 ## Project Inputs
 
 Each project lives in `projects/{project-name}`.
