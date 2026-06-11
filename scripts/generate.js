@@ -4,12 +4,14 @@ import { extname } from "node:path"
 import sizeOf from "image-size"
 import mime from "mime-types"
 import {
+  DEFAULT_PRESENTATION_VERSION,
   FETCH_TIMEOUT_MS,
-  IIIF_CONTEXT,
+  IIIF_CONTEXTS,
   MAX_FILE_SIZE_WARNING_BYTES,
   MAX_IMAGE_DIMENSION_WARNING,
   SUPPORTED_IMAGE_EXTENSIONS,
   SUPPORTED_IMAGE_MIME_TYPES,
+  SUPPORTED_PRESENTATION_VERSIONS,
   TOP_LEVEL_ALLOWED_INFO_KEYS
 } from "./config.js"
 import {
@@ -139,6 +141,27 @@ function buildProjectDirectoryUrl(projectName) {
   return `./projects/${projectName}/`
 }
 
+function resolvePresentationVersion(info, warnings) {
+  const raw = info.presentationVersion
+  if (raw === undefined || raw === null) {
+    return DEFAULT_PRESENTATION_VERSION
+  }
+
+  const version = Number(raw)
+  if (!SUPPORTED_PRESENTATION_VERSIONS.includes(version)) {
+    warnings.push(
+      createWarning(
+        "unsupported-presentation-version",
+        `info.yml presentationVersion '${raw}' is not supported. Using default version ${DEFAULT_PRESENTATION_VERSION}. Supported versions: ${SUPPORTED_PRESENTATION_VERSIONS.join(", ")}.`,
+        { value: raw }
+      )
+    )
+    return DEFAULT_PRESENTATION_VERSION
+  }
+
+  return version
+}
+
 function normalizeTopLevelFields(info, warnings) {
   const out = {}
 
@@ -198,10 +221,10 @@ function toManifestMetadata(info) {
   return metadataFromInfo(info.metadata)
 }
 
-function makeCanvas(manifestId, index, label, body) {
-  const canvasId = `${manifestId}/canvas/${index}`
-  const pageId = `${manifestId}/page/${index}/1`
-  const annotationId = `${manifestId}/annotation/${index}/1`
+function makeCanvas(canvasBaseId, index, label, body) {
+  const canvasId = `${canvasBaseId}/canvas/${index}`
+  const pageId = `${canvasBaseId}/page/${index}/1`
+  const annotationId = `${canvasBaseId}/annotation/${index}/1`
 
   const canvas = {
     id: canvasId,
@@ -624,45 +647,37 @@ function mergeAndOrderResources(infoResolved, folderResources) {
   return ordered
 }
 
-function buildManifest({ projectName, siteBaseUrl, info, resources, warnings }) {
-  const manifestId = `${siteBaseUrl}/projects/${projectName}/manifest.json`
-  const topLevel = normalizeTopLevelFields(info, warnings)
+function buildCanvases(canvasBaseId, resources) {
+  return resources.map((resource, index) => {
+    const body = {
+      id: resource.body.id,
+      type: resource.body.type ?? "Image"
+    }
 
+    if (resource.body.format) {
+      body.format = resource.body.format
+    }
+    if (resource.body.width) {
+      body.width = resource.body.width
+    }
+    if (resource.body.height) {
+      body.height = resource.body.height
+    }
+    if (resource.body.service) {
+      body.service = Array.isArray(resource.body.service) ? resource.body.service : [resource.body.service]
+    }
+
+    return makeCanvas(canvasBaseId, index + 1, resource.label, body)
+  })
+}
+
+function buildManifestContent({ projectName, info, resources, canvasBaseId, warnings }) {
+  const topLevel = normalizeTopLevelFields(info, warnings)
   const manifestLabel = languageMapFrom(info.label ?? projectName)
   const metadata = toManifestMetadata(info)
+  const canvases = buildCanvases(canvasBaseId, resources)
 
-  const manifest = {
-    "@context": IIIF_CONTEXT,
-    id: manifestId,
-    type: "Manifest",
-    label: manifestLabel,
-    metadata,
-    items: resources.map((resource, index) => {
-      const body = {
-        id: resource.body.id,
-        type: resource.body.type ?? "Image"
-      }
-
-      if (resource.body.format) {
-        body.format = resource.body.format
-      }
-      if (resource.body.width) {
-        body.width = resource.body.width
-      }
-      if (resource.body.height) {
-        body.height = resource.body.height
-      }
-      if (resource.body.service) {
-        body.service = Array.isArray(resource.body.service) ? resource.body.service : [resource.body.service]
-      }
-
-      return makeCanvas(manifestId, index + 1, resource.label, body)
-    })
-  }
-
-  Object.assign(manifest, topLevel)
-
-  if (!manifest.rights) {
+  if (!topLevel.rights) {
     warnings.push(
       createWarning(
         "missing-rights",
@@ -672,16 +687,31 @@ function buildManifest({ projectName, siteBaseUrl, info, resources, warnings }) 
     )
   }
 
+  return { topLevel, manifestLabel, metadata, canvases }
+}
+
+function serializeManifest({ manifestId, presentationVersion, content }) {
+  const manifest = {
+    "@context": IIIF_CONTEXTS[presentationVersion],
+    id: manifestId,
+    type: "Manifest",
+    label: content.manifestLabel,
+    metadata: content.metadata,
+    items: content.canvases
+  }
+
+  Object.assign(manifest, content.topLevel)
+
   return manifest
 }
 
-function generateProjectReadme(projectName, manifestUrl) {
+function generateProjectReadme(projectName, { manifestUrl, manifestV3Url, manifestV4Url, presentationVersion }) {
   const encodedManifestUrl = encodeURIComponent(manifestUrl)
   const miradorUrl = `https://projectmirador.org/embed/?iiif-content=${encodedManifestUrl}`
   const universalViewerUrl = `https://uv-v3.netlify.app/#?manifest=${encodedManifestUrl}`
   const tpenImportUrl = `https://app.t-pen.org/project/import?manifest=${encodedManifestUrl}`
 
-  return `# ${projectName}\n\nThis project is generated by repository scripts.\n\n## Inputs\n- Add local images in images/\n- Add external references using .lnk files in images/ (one HTTP(S) URL per file)\n- Optional advanced configuration in info.yml\n\n## Generated Outputs\n- manifest.json\n- WARNING.md\n\n## Links\n- [Manifest.json](${manifestUrl})\n- [Images folder](./images/)\n- [Mirador Viewer](${miradorUrl})\n- [Universal Viewer](${universalViewerUrl})\n- [TPEN3 Create Project](${tpenImportUrl})\n\n## TPEN3\nUse the TPEN3 import link above to create a new project directly from this manifest.\n\n> This file is regenerated when manifest generation runs. Put durable custom metadata in info.yml.\n`
+  return `# ${projectName}\n\nThis project is generated by repository scripts.\n\n## Inputs\n- Add local images in images/\n- Add external references using .lnk files in images/ (one HTTP(S) URL per file)\n- Optional advanced configuration in info.yml\n\n## Generated Outputs\n- manifest.json (IIIF Presentation ${presentationVersion})\n- manifest-v3.json (IIIF Presentation 3)\n- manifest-v4.json (IIIF Presentation 4)\n- WARNING.md\n\n## IIIF Presentation Versions\nmanifest.json is the primary manifest and currently uses IIIF Presentation ${presentationVersion}.\nSet presentationVersion in info.yml to switch the primary version.\nVersion-pinned manifests are always available for tools that require a specific version.\n\n## Links\n- [Manifest.json](${manifestUrl})\n- [Presentation 3 manifest](${manifestV3Url})\n- [Presentation 4 manifest](${manifestV4Url})\n- [Images folder](./images/)\n- [Mirador Viewer](${miradorUrl})\n- [Universal Viewer](${universalViewerUrl})\n- [TPEN3 Create Project](${tpenImportUrl})\n\n## TPEN3\nUse the TPEN3 import link above to create a new project directly from this manifest.\n\n> This file is regenerated when manifest generation runs. Put durable custom metadata in info.yml.\n`
 }
 
 function generateRootProjectIndex(projectNames) {
@@ -763,18 +793,46 @@ async function generateProject(projectName) {
     )
   }
 
-  const manifest = buildManifest({
+  const presentationVersion = resolvePresentationVersion(info, warnings)
+  const projectBaseUrl = `${siteBaseUrl}/projects/${projectName}`
+  const manifestUrl = `${projectBaseUrl}/manifest.json`
+
+  // Canvas, page, and annotation ids are derived from the primary manifest url
+  // in every serialization so annotations stay valid across versions.
+  const content = buildManifestContent({
     projectName,
-    siteBaseUrl,
     info,
     resources: orderedResources,
+    canvasBaseId: manifestUrl,
     warnings
   })
-  const manifestUrl = `${siteBaseUrl}/projects/${projectName}/manifest.json`
 
   await ensureDir(projectDir)
-  await writeJson(manifestPath, manifest)
-  await writeText(readmePath, generateProjectReadme(projectName, manifestUrl))
+  await writeJson(
+    manifestPath,
+    serializeManifest({ manifestId: manifestUrl, presentationVersion, content })
+  )
+
+  const versionedUrls = {}
+  for (const version of SUPPORTED_PRESENTATION_VERSIONS) {
+    const versionedFileName = `manifest-v${version}.json`
+    const versionedUrl = `${projectBaseUrl}/${versionedFileName}`
+    versionedUrls[version] = versionedUrl
+    await writeJson(
+      path.join(projectDir, versionedFileName),
+      serializeManifest({ manifestId: versionedUrl, presentationVersion: version, content })
+    )
+  }
+
+  await writeText(
+    readmePath,
+    generateProjectReadme(projectName, {
+      manifestUrl,
+      manifestV3Url: versionedUrls[3],
+      manifestV4Url: versionedUrls[4],
+      presentationVersion
+    })
+  )
   await writeText(warningPath, generateWarningsMarkdown(projectName, warnings))
 
   return {

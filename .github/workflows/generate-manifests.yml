@@ -60,7 +60,7 @@ jobs:
           if [[ -n "$(git status --porcelain)" ]]; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add projects/**/manifest.json projects/**/README.md projects/**/WARNING.md
+            git add README.md projects/**/manifest*.json projects/**/README.md projects/**/WARNING.md
             git commit -m "chore: regenerate manifests"
             git push
           else
