@@ -2,7 +2,7 @@
   "name": "github-manifests",
   "version": "0.1.0",
   "private": true,
-  "description": "Generate IIIF Presentation 3 manifests for TPEN3/Mirador projects",
+  "description": "Generate IIIF Presentation 3 and 4 manifests for TPEN3/Mirador projects",
   "type": "module",
   "scripts": {
     "generate": "node scripts/generate.js",

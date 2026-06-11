@@ -22,7 +22,13 @@ export const MAX_IMAGE_DIMENSION_WARNING = 5000
 export const MAX_FILE_SIZE_WARNING_BYTES = 15 * 1024 * 1024
 export const FETCH_TIMEOUT_MS = 15000
 
-export const IIIF_CONTEXT = "http://iiif.io/api/presentation/3/context.json"
+export const IIIF_CONTEXTS = {
+  3: "http://iiif.io/api/presentation/3/context.json",
+  4: "http://iiif.io/api/presentation/4/context.json"
+}
+
+export const SUPPORTED_PRESENTATION_VERSIONS = Object.keys(IIIF_CONTEXTS).map(Number)
+export const DEFAULT_PRESENTATION_VERSION = 3
 
 export const TOP_LEVEL_ALLOWED_INFO_KEYS = new Set([
   "label",
@@ -42,5 +48,6 @@ export const TOP_LEVEL_ALLOWED_INFO_KEYS = new Set([
   "start",
   "thumbnail",
   "resources",
-  "ordering"
+  "ordering",
+  "presentationVersion"
 ])

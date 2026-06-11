@@ -1,6 +1,6 @@
 # Github Manifests
 
-Generate and publish IIIF Presentation 3 manifests for TPEN3 and IIIF viewers such as Mirador.
+Generate and publish IIIF Presentation 3 and 4 manifests for TPEN3 and IIIF viewers such as Mirador.
 
 ## Purpose
 
@@ -19,7 +19,9 @@ This repository is designed for low-friction manifest creation:
 │   ├── example-project/
 │   │   ├── images/
 │   │   ├── info.yml
-│   │   ├── manifest.json      # generated
+│   │   ├── manifest.json      # generated (primary version)
+│   │   ├── manifest-v3.json   # generated (Presentation 3)
+│   │   ├── manifest-v4.json   # generated (Presentation 4)
 │   │   ├── README.md          # generated
 │   │   └── WARNING.md         # generated
 ├── scripts/
@@ -45,7 +47,7 @@ Required:
 
 Optional:
 
-- info.yml for metadata, ordering, and top-level IIIF fields
+- info.yml for metadata, ordering, top-level IIIF fields, and presentationVersion
 
 Supported external resource methods:
 
@@ -58,6 +60,29 @@ Ordering priority is:
 
 1. resources entries in info.yml (by order, then natural file/url sort)
 2. remaining local images and .lnk files in natural filename order
+
+## IIIF Presentation Versions
+
+Each generation run writes three manifests per project:
+
+- manifest.json: the primary manifest, using the project's configured version
+- manifest-v3.json: always IIIF Presentation 3
+- manifest-v4.json: always IIIF Presentation 4
+
+The primary version defaults to 3 so existing tools keep working.
+To switch a project's primary manifest to Presentation 4, set this in info.yml:
+
+```yaml
+presentationVersion: 4
+```
+
+The version-pinned manifests are always published, so tools that are not yet upgraded can keep using manifest-v3.json while v4-ready tools use manifest-v4.json.
+Canvas, page, and annotation ids are identical across all three serializations, so annotations remain valid whichever version a tool loads.
+
+Reference guidance:
+
+- [IIIF Presentation 4.0 (preview)](https://preview.iiif.io/api/prezi-4/presentation/4.0)
+- [IIIF Presentation 4.0 Model](https://iiif.io/api/presentation/4.0/model/)
 
 ## Metadata Policy
 
@@ -91,6 +116,8 @@ Warnings are written to project WARNING.md.
 Generated files are always overwritten on each run:
 
 - manifest.json
+- manifest-v3.json
+- manifest-v4.json
 - README.md
 - WARNING.md
 
@@ -146,9 +173,11 @@ To reduce unnecessary workflow runs, commit messages can include these markers:
 
 GitHub Pages should be configured to publish from the main branch.
 
-Manifest URL pattern:
+Manifest URL patterns:
 
 - `https://{owner}.github.io/{repo}/projects/{project-name}/manifest.json`
+- `https://{owner}.github.io/{repo}/projects/{project-name}/manifest-v3.json`
+- `https://{owner}.github.io/{repo}/projects/{project-name}/manifest-v4.json`
 
 ## TPEN3 and Viewer Use
 

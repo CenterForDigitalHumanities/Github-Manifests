@@ -1,6 +1,9 @@
 import fs from "node:fs/promises"
 import path from "node:path"
+import { IIIF_CONTEXTS, SUPPORTED_PRESENTATION_VERSIONS } from "./config.js"
 import { parseArgs, repoRoot } from "./utils.js"
+
+const SUPPORTED_CONTEXTS = new Set(Object.values(IIIF_CONTEXTS))
 
 function fail(message) {
   throw new Error(message)
@@ -11,37 +14,61 @@ async function listProjectDirectories(projectsRoot) {
   return entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name)
 }
 
-async function validateProject(projectName) {
-  const projectDir = path.join(repoRoot, "projects", projectName)
-  const manifestPath = path.join(projectDir, "manifest.json")
+async function validateManifestFile(projectName, fileName, expectedVersion) {
+  const manifestPath = path.join(repoRoot, "projects", projectName, fileName)
 
-  const raw = await fs.readFile(manifestPath, "utf8")
-  const manifest = JSON.parse(raw)
+  const raw = await fs.readFile(manifestPath, "utf8").catch(() => {
+    fail(`${projectName}: ${fileName} is missing. Run generation to create it.`)
+  })
+
+  let manifest
+  try {
+    manifest = JSON.parse(raw)
+  } catch {
+    fail(`${projectName}: ${fileName} is not valid JSON.`)
+  }
+
+  const context = manifest["@context"]
+  if (expectedVersion !== undefined && context !== IIIF_CONTEXTS[expectedVersion]) {
+    fail(`${projectName}: ${fileName} @context must be '${IIIF_CONTEXTS[expectedVersion]}'.`)
+  }
+
+  if (expectedVersion === undefined && !SUPPORTED_CONTEXTS.has(context)) {
+    fail(`${projectName}: ${fileName} @context '${context}' is not a supported IIIF Presentation context.`)
+  }
 
   if (manifest.type !== "Manifest") {
-    fail(`${projectName}: manifest type must be 'Manifest'.`)
+    fail(`${projectName}: ${fileName} type must be 'Manifest'.`)
   }
 
   if (!manifest.id || typeof manifest.id !== "string") {
-    fail(`${projectName}: manifest id is missing.`)
+    fail(`${projectName}: ${fileName} id is missing.`)
   }
 
   if (!manifest.label || typeof manifest.label !== "object") {
-    fail(`${projectName}: manifest label is missing or invalid.`)
+    fail(`${projectName}: ${fileName} label is missing or invalid.`)
   }
 
   if (!Array.isArray(manifest.items) || manifest.items.length === 0) {
-    fail(`${projectName}: manifest items must contain at least one Canvas.`)
+    fail(`${projectName}: ${fileName} items must contain at least one Canvas.`)
   }
 
   for (const [index, canvas] of manifest.items.entries()) {
     if (canvas.type !== "Canvas") {
-      fail(`${projectName}: item ${index + 1} is not a Canvas.`)
+      fail(`${projectName}: ${fileName} item ${index + 1} is not a Canvas.`)
     }
 
     if (!Array.isArray(canvas.items) || canvas.items.length === 0) {
-      fail(`${projectName}: canvas ${index + 1} is missing AnnotationPage items.`)
+      fail(`${projectName}: ${fileName} canvas ${index + 1} is missing AnnotationPage items.`)
     }
+  }
+}
+
+async function validateProject(projectName) {
+  await validateManifestFile(projectName, "manifest.json", undefined)
+
+  for (const version of SUPPORTED_PRESENTATION_VERSIONS) {
+    await validateManifestFile(projectName, `manifest-v${version}.json`, version)
   }
 
   return `${projectName}: OK`
